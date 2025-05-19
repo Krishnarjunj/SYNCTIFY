@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.env
+venv/
+token.json
+text.txt
+secrets/
+
+# Node
+node_modules/
+build/
+dist/
+
+# System
+.DS_Store
+*.swp
