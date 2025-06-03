@@ -1,8 +1,9 @@
 # requirements.txt
-flask==2.0.1
+flask==2.2.5
 flask-cors==3.0.10
 google-api-python-client==2.52.0
 requests==2.28.1
 python-dotenv==0.20.0
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.20.8
+Werkzeug==2.2.3
