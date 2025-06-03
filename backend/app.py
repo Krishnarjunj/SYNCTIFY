@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=["http://localhost:3000"])
+CORS(app, supports_credentials=True, origins=["http://localhost:3000", "https://synctify-y2s.vercel.app"])
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 app.config['SESSION_COOKIE_SAMESITE'] = None
 app.config['SESSION_COOKIE_SECURE'] = False
@@ -57,7 +57,7 @@ def callback():
     session["spotify_token"] = access_token
     session["spotify_user_id"] = user_json["id"]
 
-    return redirect(f"http://localhost:3000/#token={access_token}")
+    return redirect(f"https://synctify-y2s.vercel.app/#token={access_token}")
 
 @app.route("/convert", methods=["POST"])
 def convert_playlist():
