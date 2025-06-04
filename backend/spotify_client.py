@@ -16,7 +16,7 @@ API_BASE_URL = 'https://api.spotify.com/v1/'
 
 CLIENT_ID = os.environ.get('SPOTIFY_CLIENT_ID')
 CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET')
-REDIRECT_URI = 'https://synctify.onrender.com//callback'  # REdirect uri
+REDIRECT_URI = 'https://synctify.onrender.com/callback'  # REdirect uri
 
 
 def sp_oauth():
