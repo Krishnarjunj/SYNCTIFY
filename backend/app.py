@@ -1,5 +1,6 @@
 import os
 from flask import Flask, jsonify, request, redirect, session
+from flask import Response, stream_with_context
 from youtube_client import YouTubeClient
 from spotify_client import (
     sp_oauth,
@@ -17,10 +18,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=["https://synctify-y2s.vercel.app"])
+CORS(app, supports_credentials=True, origins=["http://localhost:3000", "https://synctify-y2s.vercel.app"])
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = None
+app.config['SESSION_COOKIE_SECURE'] = False
 
 @app.route("/ping")
 def ping():
@@ -60,89 +61,75 @@ def callback():
     return redirect(f"https://synctify-y2s.vercel.app/#token={access_token}")
 
 @app.route("/convert", methods=["POST"])
+@app.route("/convert", methods=["POST"])
 def convert_playlist():
     data = request.get_json()
     print("Received Data:", data)
-
-    if not data:
-        return jsonify({'error':'Missing request data'}), 400
-
     youtube_url = data.get('youtube_url')
     playlist_name = data.get("playlist_name", "Syntify Playlist")
+    spotify_token = data.get('spotify_token') or session.get("spotify_token")
 
-    # try to get token from request first then from session as fallback
-    spotify_token = data.get('spotify_token')
-    if not spotify_token or spotify_token == "None":
-        spotify_token = session.get("spotify_token")
+    def generate():
+        if not data:
+            yield "data: Error: Missing request data\n\n"
+            return
 
-    print(f"Token type: {type(spotify_token)}, Value: {spotify_token}")
+        if not youtube_url:
+            yield "data: Error: Missing YouTube URL\n\n"
+            return
 
-    if not youtube_url:
-        return jsonify({"error": "Missing YouTube URL"}), 400
+        if not spotify_token or spotify_token == "None":
+            yield "data: Error: Not authenticated with Spotify. Please login first.\n\n"
+            return
 
-    if not spotify_token or spotify_token == "None":
-        return jsonify({"error": "Not authenticated with Spotify. Please login first."}), 401
+        yield f"data: Starting conversion for playlist: {playlist_name}\n\n"
 
-    try:
-        sp = get_spotify_client_from_token(spotify_token)
-        yt_client = YouTubeClient()
+        try:
+            sp = get_spotify_client_from_token(spotify_token)
+            yt_client = YouTubeClient()
 
-        # playlist ID extraction
-        playlist_id = None
-        if "list=" in youtube_url:
-            playlist_id = youtube_url.split("list=")[1]
-            # Handle additional parameters after the playlist ID
-            if "&" in playlist_id:
-                playlist_id = playlist_id.split("&")[0]
-
-        if not playlist_id:
-            return jsonify({"error": "Invalid YouTube playlist URL"}), 400
-
-        print(f"Fetching videos from YouTube playlist ID: {playlist_id}")
-        titles = yt_client.get_videos_from_playlist(playlist_id)
-        print(f"Found {len(titles)} videos in the playlist")
-
-        spotify_playlist_id = create_spotify_playlist(sp, playlist_name)
-        print(f"Created Spotify playlist with ID: {spotify_playlist_id}")
-
-        uris = []
-        not_found = []
-
-        for title in titles:
-            print(f"Searching for track: {title}")
-            uri = search_spotify_track(sp, title)
-            if uri:
-                uris.append(uri)
+            # Extract playlist ID
+            playlist_id = None
+            if "list=" in youtube_url:
+                playlist_id = youtube_url.split("list=")[1].split("&")[0]
             else:
-                not_found.append(title)
+                yield "data: Error: Invalid YouTube playlist URL\n\n"
+                return
 
-        print(f"Found {len(uris)} tracks on Spotify out of {len(titles)} videos")
+            yield f"data: Fetching videos from YouTube playlist ID: {playlist_id}\n\n"
+            titles = yt_client.get_videos_from_playlist(playlist_id)
+            yield f"data: Found {len(titles)} videos in the playlist\n\n"
 
-        if not_found:
-            print(f"Could not find {len(not_found)} tracks: {', '.join(not_found[:5])}")
-            if len(not_found) > 5:
-                print(f"...and {len(not_found) - 5} more")
+            spotify_playlist_id = create_spotify_playlist(sp, playlist_name)
+            yield f"data: Created Spotify playlist with ID: {spotify_playlist_id}\n\n"
 
-        if uris:
-            add_tracks_to_playlist(sp, spotify_playlist_id, uris)
-            return jsonify({
-                "message": "Success",
-                "playlist_id": spotify_playlist_id,
-                "stats": {
-                    "total_videos": len(titles),
-                    "found_tracks": len(uris),
-                    "not_found": len(not_found)
-                }
-            }), 200
-        else:
-            return jsonify({"error": "Could not find any tracks on Spotify from this playlist"}), 404
+            uris = []
+            not_found = []
 
-    except Exception as e:
-        import traceback
-        print(f"Error in convert_playlist: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+            for title in titles:
+                yield f"data: Searching for track: {title}\n\n"
+                uri = search_spotify_track(sp, title)
+                if uri:
+                    uris.append(uri)
+                else:
+                    not_found.append(title)
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000)) 
-    app.run(host='0.0.0.0', port=port, debug=True)
+            yield f"data: Found {len(uris)} tracks on Spotify out of {len(titles)} videos\n\n"
+
+            if not_found:
+                yield f"data: Could not find {len(not_found)} tracks\n\n"
+
+            if uris:
+                add_tracks_to_playlist(sp, spotify_playlist_id, uris)
+                yield f"data: Playlist created successfully! 🎉\n\n"
+            else:
+                yield f"data: Could not find any tracks on Spotify\n\n"
+
+        except Exception as e:
+            yield f"data: Error: {str(e)}\n\n"
+
+    return Response(stream_with_context(generate()), mimetype="text/event-stream")
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host="127.0.0.1", port=8080)
