@@ -36,7 +36,7 @@ function App() {
   }, []);
 
   const handleSpotifyLogin = () => {
-    window.location.href = "http://127.0.0.1:8080/login";
+    window.location.href = "https://synctify.onrender.com/login";
   };
 
   const handleConvert = async () => {
@@ -57,7 +57,7 @@ function App() {
 
     try {
       const res = await axios.post(
-        "http://127.0.0.1:8080/convert",
+        "https://synctify.onrender.com/convert",
         {
           youtube_url: ytUrl,
           playlist_name: playlistName || "SYNCTIFY Playlist",
