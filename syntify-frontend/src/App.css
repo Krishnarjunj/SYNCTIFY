@@ -1,3 +1,5 @@
+/* SYNCTIFY - Enhanced Modern Design */
+
 :root {
   --spotify-green: #1DB954;
   --spotify-green-dark: #1AA34A;
@@ -50,7 +52,7 @@ body {
 .background-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, var(--spotify-green-dark) 0%, var(--spotify-green) 50%, var(--spotify-green-light) 100%);
+  background: linear-gradient(135deg, black 0%, black 50%, black 100%);
   z-index: 0;
 }
 
@@ -58,10 +60,10 @@ body {
   position: absolute;
   inset: 0;
   background: linear-gradient(45deg, 
-    rgba(29, 185, 84, 0.03) 0%, 
+    rgba(5, 249, 90, 0.03) 0%, 
     transparent 25%, 
     transparent 75%, 
-    rgba(255, 0, 0, 0.03) 100%);
+    rgba(1, 255, 9, 0.03) 100%);
   animation: gradientShift 8s ease-in-out infinite;
 }
 
@@ -123,7 +125,7 @@ body {
 .app-title{
   font-size: 3.5rem;
   font-weight: 900;
-  background: black;
+  background: var(--spotify-green);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -161,7 +163,7 @@ body {
 }
 
 .main-card:hover {
-  border-color: rgba(64, 64, 64, 0.5);
+  border-color: var(--spotify-green);
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
 }
 
