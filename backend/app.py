@@ -13,6 +13,7 @@ from spotify_client import (
 )
 from flask_cors import CORS
 from dotenv import load_dotenv
+import json
 
 # load environment variables
 load_dotenv()
@@ -61,7 +62,6 @@ def callback():
     return redirect(f"https://synctify-y2s.vercel.app/#token={access_token}")
 
 @app.route("/convert", methods=["POST"])
-@app.route("/convert", methods=["POST"])
 def convert_playlist():
     data = request.get_json()
     print("Received Data:", data)
@@ -71,18 +71,18 @@ def convert_playlist():
 
     def generate():
         if not data:
-            yield "data: Error: Missing request data\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Missing request data'})}\n\n"
             return
 
         if not youtube_url:
-            yield "data: Error: Missing YouTube URL\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Missing YouTube URL'})}\n\n"
             return
 
         if not spotify_token or spotify_token == "None":
-            yield "data: Error: Not authenticated with Spotify. Please login first.\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Not authenticated with Spotify. Please login first.'})}\n\n"
             return
 
-        yield f"data: Starting conversion for playlist: {playlist_name}\n\n"
+        yield f"data: {json.dumps({'type': 'info', 'message': f'Starting conversion for playlist: {playlist_name}'})}\n\n"
 
         try:
             sp = get_spotify_client_from_token(spotify_token)
@@ -93,40 +93,45 @@ def convert_playlist():
             if "list=" in youtube_url:
                 playlist_id = youtube_url.split("list=")[1].split("&")[0]
             else:
-                yield "data: Error: Invalid YouTube playlist URL\n\n"
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Invalid YouTube playlist URL'})}\n\n"
                 return
 
-            yield f"data: Fetching videos from YouTube playlist ID: {playlist_id}\n\n"
+            yield f"data: {json.dumps({'type': 'info', 'message': f'Fetching videos from YouTube playlist ID: {playlist_id}'})}\n\n"
             titles = yt_client.get_videos_from_playlist(playlist_id)
-            yield f"data: Found {len(titles)} videos in the playlist\n\n"
+            yield f"data: {json.dumps({'type': 'info', 'message': f'Found {len(titles)} videos in the playlist'})}\n\n"
 
             spotify_playlist_id = create_spotify_playlist(sp, playlist_name)
-            yield f"data: Created Spotify playlist with ID: {spotify_playlist_id}\n\n"
+            yield f"data: {json.dumps({'type': 'info', 'message': f'Created Spotify playlist with ID: {spotify_playlist_id}'})}\n\n"
 
             uris = []
             not_found = []
+            total_tracks = len(titles)
 
-            for title in titles:
-                yield f"data: Searching for track: {title}\n\n"
+            for i, title in enumerate(titles, 1):
+                yield f"data: {json.dumps({'type': 'searching', 'message': f'Searching for track: {title}', 'current': i, 'total': total_tracks, 'track': title})}\n\n"
+                
                 uri = search_spotify_track(sp, title)
                 if uri:
                     uris.append(uri)
+                    yield f"data: {json.dumps({'type': 'found', 'message': f'✓ Found: {title}', 'current': i, 'total': total_tracks, 'track': title})}\n\n"
                 else:
                     not_found.append(title)
+                    yield f"data: {json.dumps({'type': 'not_found', 'message': f'✗ Not found: {title}', 'current': i, 'total': total_tracks, 'track': title})}\n\n"
 
-            yield f"data: Found {len(uris)} tracks on Spotify out of {len(titles)} videos\n\n"
+            yield f"data: {json.dumps({'type': 'info', 'message': f'Found {len(uris)} tracks on Spotify out of {len(titles)} videos'})}\n\n"
 
             if not_found:
-                yield f"data: Could not find {len(not_found)} tracks\n\n"
+                yield f"data: {json.dumps({'type': 'warning', 'message': f'Could not find {len(not_found)} tracks'})}\n\n"
 
             if uris:
+                yield f"data: {json.dumps({'type': 'info', 'message': 'Adding tracks to playlist...'})}\n\n"
                 add_tracks_to_playlist(sp, spotify_playlist_id, uris)
-                yield f"data: Playlist created successfully! 🎉\n\n"
+                yield f"data: {json.dumps({'type': 'success', 'message': 'Playlist created successfully! 🎉', 'playlist_id': spotify_playlist_id, 'stats': {'total_videos': len(titles), 'found_tracks': len(uris), 'not_found': len(not_found)}})}\n\n"
             else:
-                yield f"data: Could not find any tracks on Spotify\n\n"
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Could not find any tracks on Spotify'})}\n\n"
 
         except Exception as e:
-            yield f"data: Error: {str(e)}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
