@@ -1,5 +1,3 @@
-/* SYNCTIFY - Enhanced Modern Design */
-
 :root {
   --spotify-green: #1DB954;
   --spotify-green-dark: #1AA34A;
@@ -16,9 +14,9 @@
   --gray-400: #888888;
   --gray-300: #aaaaaa;
   --white: #ffffff;
-  --border-radius: 12px;
-  --border-radius-lg: 20px;
-  --border-radius-xl: 24px;
+  --border-radius: 0.75rem;
+  --border-radius-lg: 1.25rem;
+  --border-radius-xl: 1.5rem;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.4);
@@ -30,12 +28,20 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: 16px; /* Base font size */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
 body {
   font-family: 'Inter', 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.6;
   color: var(--white);
   background-color: var(--black);
   overflow-x: hidden;
+  min-height: 100vh;
+  width: 100vw;
 }
 
 /* Main Container */
@@ -45,7 +51,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 1.25rem;
+  width: 100%;
 }
 
 /* Background */
@@ -83,8 +90,8 @@ body {
 
 .particle {
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: 0.5rem;
+  height: 0.5rem;
   background: radial-gradient(circle, var(--spotify-green) 0%, transparent 70%);
   border-radius: 50%;
   animation: float 4s ease-in-out infinite;
@@ -102,7 +109,7 @@ body {
     opacity: 0.4;
   }
   50% {
-    transform: translateY(-20px) rotate(180deg);
+    transform: translateY(-1.25rem) rotate(180deg);
     opacity: 0.8;
   }
 }
@@ -112,7 +119,7 @@ body {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 600px;
+  max-width: 37.5rem; /* 600px */
   margin: 0 auto;
 }
 
@@ -123,29 +130,29 @@ body {
 }
 
 .app-title{
-  font-size: 3.5rem;
+  font-size: clamp(2rem, 8vw, 3.5rem); /* Responsive font size */
   font-weight: 900;
   background: var(--spotify-green);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -0.02em;
-  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
 }
 
 .tify{
-    font-size: 3.5rem;
+  font-size: clamp(2rem, 8vw, 3.5rem); /* Responsive font size */
   font-weight: 900;
   background: linear-gradient(135deg, var(--youtube-red-light) 0%, var(--youtube-red) 30%, var(--youtube-red) 70%, var(--youtube-red-dark) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -0.02em;
-  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
 }
 
 .app-tagline {
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 3vw, 1.2rem);
   color: black;
   font-weight: 500;
   margin-top: 0.5rem;
@@ -160,11 +167,12 @@ body {
   padding: 2.5rem;
   box-shadow: var(--shadow-lg);
   transition: var(--transition);
+  width: 100%;
 }
 
 .main-card:hover {
   border-color: var(--spotify-green);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1.5625rem 3.75rem rgba(0, 0, 0, 0.5);
 }
 
 /* Auth Section */
@@ -197,7 +205,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+  box-shadow: 0 0.25rem 0.75rem rgba(29, 185, 84, 0.4);
 }
 
 .check-icon {
@@ -259,13 +267,13 @@ body {
   border-radius: var(--border-radius-lg);
   cursor: pointer;
   transition: var(--transition);
-  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.3);
+  box-shadow: 0 0.375rem 1.25rem rgba(29, 185, 84, 0.3);
 }
 
 .spotify-login-btn:hover {
   background: var(--spotify-green-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(29, 185, 84, 0.4);
+  transform: translateY(-0.125rem);
+  box-shadow: 0 0.5rem 1.5625rem rgba(29, 185, 84, 0.4);
 }
 
 .spotify-icon {
@@ -333,7 +341,7 @@ body {
 .input-field:focus {
   outline: none;
   border-color: var(--spotify-green);
-  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.2);
+  box-shadow: 0 0 0 0.1875rem rgba(29, 185, 84, 0.2);
   background: rgba(42, 42, 42, 0.8);
 }
 
@@ -343,7 +351,7 @@ body {
 
 .youtube-input .input-field:focus {
   border-color: var(--youtube-red);
-  box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.2);
+  box-shadow: 0 0 0 0.1875rem rgba(255, 0, 0, 0.2);
 }
 
 /* Convert Button */
@@ -362,7 +370,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0.5rem 1.5625rem rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
 }
@@ -379,8 +387,8 @@ body {
 }
 
 .convert-btn:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+  transform: translateY(-0.1875rem);
+  box-shadow: 0 0.75rem 2.1875rem rgba(0, 0, 0, 0.4);
 }
 
 .convert-btn:hover::before {
@@ -419,7 +427,7 @@ body {
   padding: 1rem 1.25rem;
   background: rgba(255, 0, 0, 0.1);
   border: 1px solid rgba(255, 0, 0, 0.2);
-  border-left: 4px solid var(--youtube-red);
+  border-left: 0.25rem solid var(--youtube-red);
   border-radius: var(--border-radius);
   backdrop-filter: blur(10px);
 }
@@ -444,7 +452,7 @@ body {
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(1.25rem);
   }
   to {
     opacity: 1;
@@ -479,7 +487,7 @@ body {
 
 .open-spotify-btn:hover {
   background: var(--spotify-green-dark);
-  transform: translateY(-1px);
+  transform: translateY(-0.0625rem);
 }
 
 /* Footer */
@@ -496,7 +504,11 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 48rem) { /* 768px */
+  .app-container {
+    padding: 1rem;
+  }
+
   .main-content {
     max-width: 100%;
     padding: 0 1rem;
@@ -504,14 +516,6 @@ body {
 
   .main-card {
     padding: 2rem 1.5rem;
-  }
-
-  .app-title {
-    font-size: 2.8rem;
-  }
-
-  .app-tagline {
-    font-size: 1.1rem;
   }
 
   .logged-in-container {
@@ -526,52 +530,26 @@ body {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 30rem) { /* 480px */
   .app-container {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .main-card {
     padding: 1.5rem 1rem;
   }
 
-  .app-title {
-    font-size: 2.2rem;
-  }
-
-  .logo-container {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
   .input-field {
     padding: 0.875rem 1rem;
   }
-}
 
-/* Accessibility */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  .app-header {
+    margin-bottom: 2rem;
   }
-}
 
-/* Focus styles for better accessibility */
-.convert-btn:focus-visible,
-.spotify-login-btn:focus-visible,
-.logout-btn:focus-visible,
-.open-spotify-btn:focus-visible {
-  outline: 2px solid var(--spotify-green);
-  outline-offset: 2px;
-}
-
-.input-field:focus-visible {
-  outline: 2px solid var(--spotify-green);
-  outline-offset: 2px;
+  .auth-section {
+    margin-bottom: 2rem;
+  }
 }
 
 /* BUBBLE ANIMATION */
@@ -588,7 +566,7 @@ body {
 
 .bubble {
   position: absolute;
-  bottom: -50px;
+  bottom: -3.125rem;
   border-radius: 50%;
   opacity: 0.6;
   animation: rise infinite ease-in;
@@ -608,14 +586,14 @@ body {
 .music-wave {
   position: fixed;
   top: 0;
-  width: 30px;
+  width: 1.875rem;
   height: 100%;
   background: repeating-linear-gradient(
     to bottom,
     black,
-    black 5px,
-    transparent 5px,
-    transparent 10px
+    black 0.3125rem,
+    transparent 0.3125rem,
+    transparent 0.625rem
   );
   opacity: 0.5;
   z-index: -1;
@@ -635,25 +613,25 @@ body {
     background-position: 0 0;
   }
   100% {
-    background-position: 0 10px;
+    background-position: 0 0.625rem;
   }
 }
 
 .music-bars {
   display: flex;
-  gap: 4px;
-  margin: 10px auto;
+  gap: 0.25rem;
+  margin: 0.625rem auto;
   justify-content: center;
   align-items: flex-end;
-  height: 24px;
+  height: 1.5rem;
 }
 
 .bar {
-  width: 4px;
+  width: 0.25rem;
   height: 100%;
   background: limegreen;
   animation: bounce 1s infinite ease-in-out;
-  border-radius: 2px;
+  border-radius: 0.125rem;
 }
 
 .bar:nth-child(1) { animation-delay: 0s; }
@@ -665,4 +643,29 @@ body {
 @keyframes bounce {
   0%, 100% { transform: scaleY(0.4); }
   50% { transform: scaleY(1); }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus styles for better accessibility */
+.convert-btn:focus-visible,
+.spotify-login-btn:focus-visible,
+.logout-btn:focus-visible,
+.open-spotify-btn:focus-visible {
+  outline: 2px solid var(--spotify-green);
+  outline-offset: 0.125rem;
+}
+
+.input-field:focus-visible {
+  outline: 2px solid var(--spotify-green);
+  outline-offset: 0.125rem;
 }
