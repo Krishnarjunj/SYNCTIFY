@@ -11,6 +11,17 @@ function App() {
   const [playlistId, setPlaylistId] = useState(null);
   const [error, setError] = useState('');
   const [spotifyToken, setSpotifyToken] = useState(null);
+  
+  // New states for real-time updates
+  const [searchProgress, setSearchProgress] = useState({
+    current: 0,
+    total: 0,
+    currentTrack: '',
+    foundTracks: 0,
+    notFoundTracks: 0,
+    isSearching: false,
+    logs: []
+  });
 
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -39,6 +50,18 @@ function App() {
     window.location.href = "https://synctify.onrender.com/login";
   };
 
+  const resetProgress = () => {
+    setSearchProgress({
+      current: 0,
+      total: 0,
+      currentTrack: '',
+      foundTracks: 0,
+      notFoundTracks: 0,
+      isSearching: false,
+      logs: []
+    });
+  };
+
   const handleConvert = async () => {
     if (!ytUrl) {
       setError("Please enter a YouTube playlist URL");
@@ -54,31 +77,65 @@ function App() {
     setIsLoading(true);
     setResponseMsg('');
     setPlaylistId(null);
+    resetProgress();
 
     try {
-      const res = await axios.post(
-        "https://synctify.onrender.com/convert",
+      // Use EventSource for Server-Sent Events
+      const eventSource = new EventSource(
+        `https://synctify.onrender.com/convert`,
         {
-          youtube_url: ytUrl,
-          playlist_name: playlistName || "SYNCTIFY Playlist",
-          spotify_token: spotifyToken,
-        },
-        {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          withCredentials: true,
+          body: JSON.stringify({
+            youtube_url: ytUrl,
+            playlist_name: playlistName || "SYNCTIFY Playlist",
+            spotify_token: spotifyToken,
+          })
         }
       );
 
-      setPlaylistId(res.data.playlist_id);
+      // Since EventSource doesn't support POST, we'll use fetch with streaming
+      const response = await fetch("https://synctify.onrender.com/convert", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          youtube_url: ytUrl,
+          playlist_name: playlistName || "SYNCTIFY Playlist",
+          spotify_token: spotifyToken,
+        })
+      });
 
-      if (res.data.stats) {
-        const { total_videos, found_tracks, not_found } = res.data.stats;
-        setResponseMsg(`✅ Playlist Created! Found ${found_tracks} out of ${total_videos} tracks.`);
-      } else {
-        setResponseMsg("✅ Playlist Created Successfully!");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.substring(6));
+              handleStreamMessage(data);
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          }
+        }
+      }
+
     } catch (err) {
       console.error("Error details:", err);
 
@@ -86,10 +143,69 @@ function App() {
         setError("Spotify authentication expired. Please login again.");
         handleLogout();
       } else {
-        setError(err.response?.data?.error || "An error occurred while converting the playlist");
+        setError(err.response?.data?.error || err.message || "An error occurred while converting the playlist");
       }
     } finally {
       setIsLoading(false);
+      setSearchProgress(prev => ({ ...prev, isSearching: false }));
+    }
+  };
+
+  const handleStreamMessage = (data) => {
+    const { type, message, current, total, track, playlist_id, stats } = data;
+
+    // Add to logs
+    setSearchProgress(prev => ({
+      ...prev,
+      logs: [...prev.logs.slice(-20), { type, message, timestamp: Date.now() }] // Keep last 20 logs
+    }));
+
+    switch (type) {
+      case 'searching':
+        setSearchProgress(prev => ({
+          ...prev,
+          current: current || prev.current,
+          total: total || prev.total,
+          currentTrack: track || '',
+          isSearching: true
+        }));
+        break;
+
+      case 'found':
+        setSearchProgress(prev => ({
+          ...prev,
+          foundTracks: prev.foundTracks + 1,
+          current: current || prev.current
+        }));
+        break;
+
+      case 'not_found':
+        setSearchProgress(prev => ({
+          ...prev,
+          notFoundTracks: prev.notFoundTracks + 1,
+          current: current || prev.current
+        }));
+        break;
+
+      case 'success':
+        setPlaylistId(playlist_id);
+        if (stats) {
+          const { total_videos, found_tracks, not_found } = stats;
+          setResponseMsg(`✅ Playlist Created! Found ${found_tracks} out of ${total_videos} tracks.`);
+        } else {
+          setResponseMsg("✅ Playlist Created Successfully!");
+        }
+        setSearchProgress(prev => ({ ...prev, isSearching: false }));
+        break;
+
+      case 'error':
+        setError(message);
+        setSearchProgress(prev => ({ ...prev, isSearching: false }));
+        break;
+
+      default:
+        // Handle info, warning, etc.
+        break;
     }
   };
 
@@ -100,6 +216,7 @@ function App() {
     setPlaylistId(null);
     setResponseMsg('');
     setError('');
+    resetProgress();
   };
 
   const openSpotifyPlaylist = () => {
@@ -226,6 +343,54 @@ function App() {
               </>
             )}
           </button>
+
+          {/* Progress Section */}
+          {searchProgress.isSearching && (
+            <div className="progress-section">
+              <div className="progress-header">
+                <h3>🎵 Searching for tracks...</h3>
+                <div className="progress-stats">
+                  <span className="found-count">✓ {searchProgress.foundTracks}</span>
+                  <span className="not-found-count">✗ {searchProgress.notFoundTracks}</span>
+                  <span className="total-count">{searchProgress.current}/{searchProgress.total}</span>
+                </div>
+              </div>
+              
+              {searchProgress.total > 0 && (
+                <div className="progress-bar-container">
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill"
+                      style={{ width: `${(searchProgress.current / searchProgress.total) * 100}%` }}
+                    ></div>
+                  </div>
+                  <span className="progress-percentage">
+                    {Math.round((searchProgress.current / searchProgress.total) * 100)}%
+                  </span>
+                </div>
+              )}
+
+              {searchProgress.currentTrack && (
+                <div className="current-track">
+                  <span className="track-label">Currently searching:</span>
+                  <span className="track-name">{searchProgress.currentTrack}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Live Log Section */}
+          {searchProgress.logs.length > 0 && (
+            <div className="log-section">
+              <div className="log-container">
+                {searchProgress.logs.slice(-5).map((log, index) => (
+                  <div key={`${log.timestamp}-${index}`} className={`log-item log-${log.type}`}>
+                    <span className="log-message">{log.message}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="error-message">
