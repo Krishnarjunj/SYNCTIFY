@@ -47,7 +47,7 @@ function App() {
   }, []);
 
   const handleSpotifyLogin = () => {
-    window.location.href = "https://synctify.onrender.com/login";
+    window.location.href = "https://synctify.onrender.com/callback";
   };
 
   const resetProgress = () => {
