@@ -42,7 +42,7 @@ SYNCTIFY/
 └── README.md
 ```
 
-## 3. High-Level Architecture
+## 3. Architecture
 
 ```mermaid
 flowchart LR
@@ -322,7 +322,7 @@ Tradeoff:
 3. Introduce background jobs for very large playlists and async status polling.
 4. Add metrics/logging (success rate, average match rate, API latency).
 
-## 13. Suggested Reading Order For New Contributors
+## 13. Suggested Reading Order
 
 1. `backend/app.py` (route lifecycle + stream contract)
 2. `backend/spotify_client.py` (OAuth + search heuristics)
